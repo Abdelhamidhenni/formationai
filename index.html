@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>reveal.js</title>
+
+		<link rel="stylesheet" href="css/reveal.css">
+		<link rel="stylesheet" href="css/theme/black.css">
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="lib/css/zenburn.css">
+
+		<!-- Printing and PDF exports -->
+		<script>
+			var link = document.createElement( 'link' );
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+			document.getElementsByTagName( 'head' )[0].appendChild( link );
+		</script>
+	</head>
+	<body>
+		<div class="reveal">
+				<div class="slides">
+					<section><h4>Comment intégrer un chatbot intelligent en 20 minutes</h4></section>
+					<section>
+						<h4>Introduction aux solutions</h4>
+						<p class="fragment fade-up"> 
+							<img data-src="https://cdn-images-1.medium.com/max/1600/0*sepg7sXXe3zcmGvZ.png" >
+						</p>
+						<p class="fragment fade-up"> 
+							<img data-src="https://cdn.recast.ai/website/logo/recast-ai-logo-inline.svg" >
+						</p>
+					</section>					
+					<section><h4>Configuration sur Facebook</h4></section>
+					<section><h4>Intégration de Chatfuel</h4></section>
+					<section>
+						<section><h4>Intégration de Recast.ai</h4></section>
+						<section data-markdown>
+							<textarea data-template>
+								#### Prérequis
+								- [Nodejs](https://nodejs.org/en/)
+								- [Ngrok.io](https://ngrok.com/)
+							</textarea>
+						</section>	
+						<section data-markdown>
+							<textarea data-template>
+								#### Commandes
+								* Création dossier projet : <br>
+								`mkdir ~/formationAI`<br>
+								* Création fichier .js : <br>
+								`touch ai.js`<br>
+								* Initialisation dossier Node :<br> 
+								`npm init`<br>
+								* Installation des dépendances : <br>
+								`npm install axios express --save`
+							</textarea>
+						</section>
+						<section>
+							<a href="https://recast.ai">RECAST.AI</a>
+							<p class="fragment fade-up"> 
+								<img data-src="https://raw.githubusercontent.com/RecastAI/SDK-NodeJs/HEAD/misc/logo2.png" >
+							</p>
+						</section>
+						<section>
+							<pre><code data-trim data-noescape class="stretch">
+								// MODULES ET INITIALISATION DE NOTRE APPLICATION
+
+								const express = require('express');
+								const url = require('url');
+								const axios = require('axios');
+								const RECAST_REQUEST_TOKEN = 'YOUR_TOKEN_HERE';
+								const PORT = 5000;
+								const app = express();
+							</code></pre>
+						</section>
+						<section>
+							<pre><code data-trim data-noescape class="stretch">
+								// Mise en place du serveur
+								// Informations réceptionnées par Chatfuel
+									app.get('/', (req, res) => {
+										const query = url.parse(req.url, true).query;
+										const userId = query['chatfuel user id'];
+										const userMessage = query['user_message'];
+										console.log(query);
+							</code>
+							</pre>
+						</section>
+						<section>
+							<pre><code data-trim data-noescape class="stretch">					
+								// Appel à l'api Recast 
+								return axios
+									.post(
+									'https://api.recast.ai/build/v1/dialog',
+									{
+										message: { content: userMessage, type: 'application/json' },
+										conversation_id: userId,
+									},
+									{ headers: { Authorization: `Token ${RECAST_REQUEST_TOKEN}` } }
+									)
+									.then(body => {
+										// Utilisation de la fonction pour mettre les messages 
+										// au bon format json pour chatfuel
+										const formattedMessages = body.data.results.messages.map(chatfuelFormat);
+										console.log(formattedMessages);
+										// Reponse de l'IA
+										res.json({
+											messages: formattedMessages,
+										});
+									});
+								})
+								.listen(PORT, () => console.log(`App started on port ${5000}`));	
+							</code>
+							</pre>
+						</section>
+						<section>
+							<pre><code data-trim data-noescape class="stretch">
+								// Fonction de Formatage (Recast à Chatfuel) 
+								function chatfuelFormat(message) {
+									// Source : { type: 'text', content: 'XXX' }
+									// Destination { text: 'XXX' }
+									if (message.type === 'text') {
+										return { text: message.content };
+									}
+									
+									// Source: { type: 'picture', content: 'URL' }
+									// Destination: { attachment: { type: 'image', payload: { url: 'URL' } } }
+									if (message.type === 'picture') {
+										return {
+											attachment: {
+												type: 'image',
+												payload: { url: message.content },
+											},
+										};
+									}
+									
+									console.error('Unsupported message format: ', message.type);
+									return { text: 'An error occured' };
+								}
+							</code>
+							</pre>
+						</section>
+						<section data-markdown>
+							<textarea data-template>
+								### Tests
+								* Lancement du projet : `node ai.js`
+							</textarea>
+						</section>
+						<section><h4>Quels usages ?</h4></section>
+					</section>
+				</div>
+			</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+			// More info about config & dependencies:
+			// - https://github.com/hakimel/reveal.js#configuration
+			// - https://github.com/hakimel/reveal.js#dependencies
+			Reveal.initialize({
+				multiplex: {
+					// Example values. To generate your own, see the socket.io server instructions.
+					secret: 'null', // Obtained from the socket.io server. Gives this (the master) control of the presentation
+					id: '1ea875674b17ca76', // Obtained from socket.io server
+					url: 'https://reveal-js-multiplex-ccjbegmaii.now.sh' // Location of socket.io server
+				},
+				dependencies: [
+					{ src: '//cdn.socket.io/socket.io-1.3.5.js', async: true },
+                    { src: 'plugin/multiplex/client.js', async: true },
+                    { src: 'plugin/markdown/marked.js' },
+					{ src: 'plugin/markdown/markdown.js' },
+					{ src: 'plugin/notes/notes.js', async: true },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
